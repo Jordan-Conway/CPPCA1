@@ -1,13 +1,18 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <vector>
+#include <fstream>
+#include <list>
 
 using namespace std;
 
-void menu();
-void importData();
-void linkedListFeatures();
-void vectorFeatures();
+struct Shipment;
+
+//Global variables
+string fileName = "shipping-data-small.csv";
+list<Shipment> shipmentsL;
+vector<Shipment> shipmentsV;
 
 struct Shipment
 {
@@ -25,29 +30,8 @@ struct Shipment
     int arrivedOnTime;
 };
 
-int main(){
-
-    menu();
-}
-
-void menu(){
-    int input;
-    cout << "Please choose an option" << endl;
-    cin >> input;
-
-    switch(input){
-        case 1: {
-            linkedListFeatures();
-            break;
-        }
-        case 2: {
-            vectorFeatures();
-            break;
-        }
-    }
-}
-
-Shipment parseLine(const string &line){
+Shipment parseLine(const string &line)
+{
     Shipment ship;
     string temp;
     stringstream ss(line);
@@ -85,19 +69,100 @@ Shipment parseLine(const string &line){
 
     getline(ss, temp, ',');
     ship.arrivedOnTime = stoi(temp);
+
+    return ship;
 }
 
-//TODO read in data from file
-void importData(){
+//This function should not be called. Use initialise() instead
+void importData(const string &name, list<Shipment> &data)
+{
+    ifstream fin(name);
 
+    if(fin.good())
+    {
+        string line;
+        getline(fin, line);
+        while(getline(fin, line)){
+            Shipment ship = parseLine(line);
+            data.push_back(ship);
+        }
+        fin.close();
+    }
+    else
+    {
+        cout << "Error opening file" << endl;
+    }
+}
+
+//Copies all data from list to vector
+void copyToVector(const list<Shipment> &list, vector<Shipment> vector){
+    for(const Shipment &s: list){
+        vector.push_back(s);
+    }
+}
+
+//Calls to load data to list and vector
+void initialise(){
+    importData(fileName, shipmentsL);
+    copyToVector(shipmentsL, shipmentsV);
+}
+
+void display(const Shipment &ship){
+    cout << left << ship.id << endl;
+}
+
+void displayAll(const list<Shipment> &data){
+    for(const Shipment& s: data){
+        display(s);
+    }
+}
+
+void displayAll(const vector<Shipment> &data){
+    for(const Shipment& s: data){
+        display(s);
+    }
 }
 
 //TODO menu for linked list
-void linkedListFeatures(){
-
+void linkedListFeatures()
+{
+    displayAll(shipmentsL);
 }
 
 //TODO menu for vector
-void vectorFeatures(){
+void vectorFeatures()
+{
 
+}
+
+void menu()
+{
+    int input;
+    cout << "Please choose an option" << endl;
+    cin >> input;
+
+    switch(input)
+    {
+        case 1:
+        {
+            linkedListFeatures();
+            break;
+        }
+        case 2:
+        {
+            vectorFeatures();
+            break;
+        }
+        default:
+        {
+            cout << "Invalid input. Please try again" << endl;
+            break;
+        }
+    }
+}
+
+int main()
+{
+    initialise();
+    menu();
 }
