@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <list>
+#include <iomanip>
 
 using namespace std;
 
@@ -108,16 +109,42 @@ void initialise(){
 }
 
 void display(const Shipment &ship){
-    cout << left << ship.id << endl;
+    cout << left << setw(5) << ship.id << endl;
 }
 
 void displayAll(const list<Shipment> &data){
+    cout << left << setw(5) << "ID"
+        << setw(20) << "Warehouse Block"
+        << setw(10) << "Mode"
+        << setw(25) << "Customer Care Calls"
+        << setw(20) << "Customer Rating"
+        << setw(10) << "Cost"
+        << setw(20) << "Prior Purchases"
+        << setw(15) << "Importance"
+        << setw(8) << "Gender"
+        << setw(15) << "Discount"
+        << setw(10) << "Weight"
+        << setw(15) << "Arrived on time"
+        << endl;
     for(const Shipment& s: data){
         display(s);
     }
 }
 
 void displayAll(const vector<Shipment> &data){
+    cout << left << setw(5) << "ID"
+         << setw(20) << "Warehouse Block"
+         << setw(10) << "Mode"
+         << setw(25) << "Customer Care Calls"
+         << setw(20) << "Customer Rating"
+         << setw(10) << "Cost"
+         << setw(20) << "Prior Purchases"
+         << setw(15) << "Importance"
+         << setw(8) << "Gender"
+         << setw(15) << "Discount"
+         << setw(10) << "Weight"
+         << setw(15) << "Arrived on time"
+         << endl;
     for(const Shipment& s: data){
         display(s);
     }
