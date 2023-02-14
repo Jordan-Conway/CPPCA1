@@ -5,36 +5,35 @@
 #include <list>
 #include <iomanip>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 
-struct Shipment;
+struct Shipment
+{
+    int id{};
+    char warehouseBlock{};
+    string shipMode;
+    int customerCareCalls{};
+    int customerRating{};
+    int cost{};
+    int priorPurchases{};
+    string importance;
+    char gender{};
+    int discount{};
+    int weight{};
+    int arrivedOnTime{};
+};
 
 //Global variables
 string fileName = "shipping-data-small.csv";
 list<Shipment> shipmentsL;
 vector<Shipment> shipmentsV;
+unordered_set<string> validImportance = {"low", "medium", "high"};
+unordered_map<int, Shipment> shipmentsM;
 
-//TODO sort linkedlist by customer ratings
-//TODO Set features
-//TODO Map features
 //TODO Document on Containers
-
-struct Shipment
-{
-    int id;
-    char warehouseBlock;
-    string shipMode;
-    int customerCareCalls;
-    int customerRating;
-    int cost;
-    int priorPurchases;
-    string importance;
-    char gender;
-    int discount;
-    int weight;
-    int arrivedOnTime;
-};
 
 Shipment parseLine(const string &line)
 {
@@ -101,11 +100,20 @@ void importData(const string &name, list<Shipment> &data)
 }
 
 //Copies all data from list to vector
-void copyToVector(const list<Shipment> &list, vector<Shipment> vector){
-    for(const Shipment &s: list){
-        vector.clear();
+void copyToVector(const list<Shipment> &list, vector<Shipment> &vector){
+    vector.clear();
+    for(const Shipment& s: list){
         vector.push_back(s);
     }
+    cout << "Vector updated" << endl;
+}
+
+void copyToMap(list<Shipment> &data, unordered_map<int, Shipment> &map)
+{
+    for (const Shipment &s: data) {
+        map.insert({s.id, s});
+    }
+    cout << "Map updated" << endl;
 }
 
 //Calls to load data to list and vector
@@ -113,6 +121,7 @@ void loadData()
 {
     importData(fileName, shipmentsL);
     copyToVector(shipmentsL, shipmentsV);
+    copyToMap(shipmentsL, shipmentsM);
 }
 
 void display(const Shipment &ship)
@@ -148,7 +157,6 @@ void displayHeadings(){
          << endl;
 }
 
-//TODO stop line wrapping
 void displayAll(const list<Shipment> &data)
 {
     displayHeadings();
@@ -165,14 +173,16 @@ void displayAll(const vector<Shipment> &data)
     }
 }
 
-Shipment getFirst(const list<Shipment> &data)
+void getFirst(const list<Shipment> &data)
 {
-    return data.front();
+    displayHeadings();
+    display(data.front());
 }
 
-Shipment getLast(const list<Shipment> &data)
+void getLast(const list<Shipment> &data)
 {
-    return data.back();
+    displayHeadings();
+    display(data.back());
 }
 
 void getById(const list<Shipment> &data){
@@ -187,6 +197,7 @@ void getById(const list<Shipment> &data){
     {
         if(s.id == id)
         {
+            displayHeadings();
             display(s);
             found = true;
             break;
@@ -199,17 +210,15 @@ void getById(const list<Shipment> &data){
 }
 
 void getByIndex(const vector<Shipment> &data){
-    bool found = false;
     int index;
 
     cout << "Enter an index" << endl;
 
     cin >> index;
 
+    displayHeadings();
     display(data.at(index));
 }
-
-
 
 void deleteFirst(list<Shipment> &data)
 {
@@ -259,7 +268,7 @@ Shipment createShipment(){
     char gender;
     int discount;
     int weight;
-    char onTime;
+    int onTime;
 
     Shipment ship;
 
@@ -283,7 +292,7 @@ Shipment createShipment(){
     cin >> discount;
     cout << "Enter the weight of the item in grammes" << endl;
     cin >> weight;
-    cout << "Did the item arrive on time? (Y/N)" << endl;
+    cout << "Did the item arrive on time? (1/0)" << endl;
     cin >> onTime;
 
     ship.id = id;
@@ -311,13 +320,19 @@ void addAtIndex(list<Shipment> &data)
 
     cin >> index;
 
-    for(list<Shipment>::iterator iter = data.begin();iter != data.end(); iter++)
-    {
-        if(distance(data.begin(), iter) == index)
+    if(index > data.size()){
+        data.push_back(ship);
+        added = true;
+    }
+    else{
+        for(list<Shipment>::iterator iter = data.begin();iter != data.end(); iter++)
         {
-            data.insert(iter, ship);
-            added = true;
-            break;
+            if(distance(data.begin(), iter) == index)
+            {
+                data.insert(iter, ship);
+                added = true;
+                break;
+            }
         }
     }
     if(added)
@@ -329,9 +344,27 @@ void addAtIndex(list<Shipment> &data)
     }
 }
 
+void addAtIndex(vector<Shipment> &data, int index)
+{
+    Shipment ship = createShipment();
+
+    for(auto iter = data.begin();iter != data.end(); iter++)
+    {
+        if(distance(data.begin(), iter) == index)
+        {
+            data.insert(iter, ship);
+        }
+    }
+}
+
 bool isLessThan2(const Shipment& ship)
 {
     return ship.customerRating < 2;
+}
+
+bool isLessThan3(const Shipment& ship)
+{
+    return ship.customerRating < 3;
 }
 
 int countRatings(list<Shipment> &data)
@@ -341,14 +374,22 @@ int countRatings(list<Shipment> &data)
     return count;
 }
 
+bool compareRating(const Shipment &s1, const Shipment &s2){
+    return s1.customerRating > s2.customerRating;
+}
+
 bool compareCost(const Shipment &s1, const Shipment &s2)
 {
-    return s1.cost < s2.cost;
+    return s1.cost > s2.cost;
 }
 
 bool compareId(const Shipment &s1, const Shipment &s2)
 {
     return s1.id < s2.id;
+}
+
+void sortByRating(list<Shipment> &data){
+    data.sort(compareRating);
 }
 
 void sortByCost(vector<Shipment> &data)
@@ -361,6 +402,56 @@ void sortById(vector<Shipment> &data)
 {
     sort(data.begin(), data.end(), compareId);
     cout << "Vector Sorted" << endl;
+}
+
+vector<Shipment> getUnder(vector<Shipment> &data)
+{
+   vector<Shipment> underLimit(data.size());
+
+   auto it = copy_if(data.begin(), data.end(), underLimit.begin(), isLessThan3);
+
+   underLimit.resize(distance(underLimit.begin(), it));
+
+   return underLimit;
+}
+
+void checkForInvalidProductImportanceValues(const list<Shipment> &data, const unordered_set<string> &validValues)
+{
+    for(const Shipment &s: data)
+    {
+        bool found = false;
+        for(const string &validValue : validValues)
+        {
+            if(validValue == s.importance){
+                found = true;
+            }
+        }
+        if(!found)
+        {
+            cout << "Id: " << s.id << " Importance: " << s.importance << endl;
+        }
+    }
+}
+
+void getById(unordered_map<int, Shipment> &map){
+    int input;
+    bool found = false;
+
+    cout << "Enter an id to search for" << endl;
+
+    cin >> input;
+
+    for(unordered_map<int, Shipment>::iterator iter = map.begin(); iter != map.end(); iter++){
+        if(iter->first == input){
+            displayHeadings();
+            display(iter->second);
+            found = true;
+            break;
+        }
+    }
+    if(!found){
+        cout << "Shipment not found" << endl;
+    }
 }
 
 void linkedListFeatures()
@@ -377,23 +468,38 @@ void linkedListFeatures()
         cout << "6. Delete last item" << endl;
         cout << "7. Delete item at index" << endl;
         cout << "8. Add item at index" << endl;
-        cout << "9. Count customer ratings less than 2";
+        cout << "9. Count customer ratings less than 2" << endl;
+        cout << "10. Sort by customer rating" << endl;
         cout << "0. Go back" << endl;
 
         cin >> input;
 
         switch(input){
-            case 1: displayAll(shipmentsL); break;
-            case 2: display(getFirst(shipmentsL)); break;
-            case 3: display(getLast(shipmentsL)); break;
-            case 4: getById(shipmentsL); break;
-            case 5: deleteFirst(shipmentsL); break;
-            case 6: deleteLast(shipmentsL); break;
-            case 7: deleteAtIndex(shipmentsL); break;
-            case 8: addAtIndex(shipmentsL); break;
-            case 9: cout << "There are " << countRatings(shipmentsL) << " ratings less than 2" << endl;
-            case 0: loop = false; break;
-            default: cout << "Invalid input. Please try again" << endl;
+            case 1:
+                displayAll(shipmentsL); break;
+            case 2:
+                getFirst(shipmentsL); break;
+            case 3:
+                getLast(shipmentsL); break;
+            case 4:
+                getById(shipmentsL); break;
+            case 5:
+                deleteFirst(shipmentsL); break;
+            case 6:
+                deleteLast(shipmentsL); break;
+            case 7:
+                deleteAtIndex(shipmentsL); break;
+            case 8:
+                addAtIndex(shipmentsL); break;
+            case 9:
+                cout << "There are " << countRatings(shipmentsL) << " ratings less than 2" << endl; break;
+            case 10:
+                sortByRating(shipmentsL);
+                cout << "List sorted" << endl; break;
+            case 0:
+                loop = false; break;
+            default:
+                cout << "Invalid input. Please try again" << endl;
         }
     }
 }
@@ -407,20 +513,82 @@ void vectorFeatures()
         cout << "1. Update vector" << endl;
         cout << "2. Display All" << endl;
         cout << "3. Get item by index" << endl;
-        cout << "4. Sort vector by cost" << endl;
-        cout << "5. Sort vector by id" << endl;
+        cout << "4. Insert at position 2" << endl;
+        cout << "5. Sort vector by cost" << endl;
+        cout << "6. Sort vector by id" << endl;
+        cout << "7. Display all shipments with a customer rating less than 3" << endl;
         cout << "0. Go back" << endl;
 
         cin >> input;
 
         switch(input){
-            case 1: copyToVector(shipmentsL, shipmentsV); break;
-            case 2: displayAll(shipmentsV); break;
-            case 3: getByIndex(shipmentsV); break;
-            case 4: sortByCost(shipmentsV); break;
-            case 5: sortById(shipmentsV); break;
-            case 0: loop = false; break;
-            default: cout << "Invalid input. Please try again" << endl;
+            case 1:
+                copyToVector(shipmentsL, shipmentsV); break;
+            case 2:
+                displayAll(shipmentsV); break;
+            case 3:
+                getByIndex(shipmentsV); break;
+            case 4:
+                addAtIndex(shipmentsV, 1); break;
+            case 5:
+                sortByCost(shipmentsV); break;
+            case 6:
+                sortById(shipmentsV); break;
+            case 7:
+                displayAll(getUnder(shipmentsV)); break;
+            case 0:
+                loop = false; break;
+            default:
+                cout << "Invalid input. Please try again" << endl;
+        }
+    }
+}
+
+void setFeatures(){
+    bool loop = true;
+    int input;
+
+    while (loop)
+    {
+        cout << "Please choose an option" << endl;
+        cout << "1. Get invalid importance values" << endl;
+        cout << "0. Go back" << endl;
+
+        cin >> input;
+
+        switch(input){
+            case 1:
+                checkForInvalidProductImportanceValues(shipmentsL, validImportance); break;
+            case 0:
+                loop = false; break;
+            default:
+                cout << "Invalid input. Please try again" << endl;
+        }
+    }
+}
+
+void mapFeatures(){
+    bool loop = true;
+    int input;
+
+    while (loop)
+    {
+        cout << "Please choose an option" << endl;
+        cout << "1. Load map" << endl;
+        cout << "2. Get by Id" << endl;
+        cout << "0. Go back" << endl;
+
+        cin >> input;
+
+        switch(input){
+            case 1:
+                copyToMap(shipmentsL, shipmentsM); break;
+            case 2:
+                getById(shipmentsM); break;
+            case 0:
+                loop = false; break;
+            default:
+                cout << "Invalid input. Please try again" << endl;
         }
     }
 }
@@ -430,35 +598,30 @@ void menu()
     bool loop = true;
     int input;
 
-    while(loop){
+    while(loop)
+    {
         cout << "Please choose an option" << endl;
         cout << "1. Linked List features" << endl;
         cout << "2. Vector features" << endl;
+        cout << "3. Set features" << endl;
+        cout << "4. Map features" << endl;
         cout << "0. Quit" << endl;
         cin >> input;
 
         switch(input)
         {
             case 1:
-            {
-                linkedListFeatures();
-                break;
-            }
+                linkedListFeatures(); break;
             case 2:
-            {
-                vectorFeatures();
-                break;
-            }
+                vectorFeatures(); break;
+            case 3:
+                setFeatures(); break;
+            case 4:
+                mapFeatures(); break;
             case 0:
-            {
-                loop = false;
-                break;
-            }
+                loop = false; break;
             default:
-            {
-                cout << "Invalid input. Please try again" << endl;
-                break;
-            }
+                cout << "Invalid input. Please try again" << endl; break;
         }
     }
 
